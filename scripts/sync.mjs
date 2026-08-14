@@ -19,7 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { DatabaseSync } from 'node:sqlite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.dirname(__dirname);
@@ -120,6 +120,9 @@ function replacePlaceholders(mcpDefs, secrets) {
     ['__ZENTAO_TOKEN_PATH__', zentaoTokenPath],
     ['__ZENTAO_ACCOUNT__', secrets.ZENTAO_ACCOUNT || ''],
     ['__ZENTAO_PASSWORD__', secrets.ZENTAO_PASSWORD || ''],
+    // 跨平台命令路径：转义为 JSON 字符串字面量，避免 Windows 反斜杠破坏 JSON 解析。
+    ['__NODE_BIN__', JSON.stringify(process.execPath).slice(1, -1)],
+    ['__REPO_DIR__', JSON.stringify(REPO).slice(1, -1)],
   ];
   let result = str;
   for (const [ph, val] of placeholders) {
@@ -136,6 +139,21 @@ function expandHome(filePath) {
 /** 将值转成 SQLite 字符串字面量，避免生成 SQL 时被单引号截断。 */
 function quoteSql(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+/** 使用 Node 内置 SQLite 执行 SQL 到 cc-switch 数据库，替代外部 sqlite3 CLI。 */
+function applySqlToCcSwitch(dbPath, sql, label) {
+  let db;
+  try {
+    db = new DatabaseSync(dbPath);
+    db.exec(sql);
+    return true;
+  } catch (e) {
+    console.warn(`[warn] 写入 cc-switch ${label} 失败:`, e.message);
+    return false;
+  } finally {
+    if (db) db.close();
+  }
 }
 
 function resolveCommands(mcpDefs) {
@@ -276,8 +294,8 @@ function syncToCodex(mcpDefs, writeMode) {
   }
 }
 
-/** 将共享 MCP 定义转换为 .mcp.json 格式 (ClaudeCode / Copilot 共用) */
-function syncToMcpJson(mcpDefs, writeMode, destPath) {
+/** 将共享 MCP 定义转换为 Claude Code 的 mcpServers 对象（含密钥脱敏预览）。 */
+function buildMcpServers(mcpDefs, writeMode) {
   const sourceDefs = writeMode ? mcpDefs : redactMcpDefsForPreview(mcpDefs);
   const servers = {};
   for (const [name, def] of Object.entries(sourceDefs)) {
@@ -292,6 +310,12 @@ function syncToMcpJson(mcpDefs, writeMode, destPath) {
       servers[name] = s;
     }
   }
+  return servers;
+}
+
+/** 将共享 MCP 定义转换为 .mcp.json 格式文件 (ClaudeCode / Copilot 共用)。 */
+function syncToMcpJson(mcpDefs, writeMode, destPath) {
+  const servers = buildMcpServers(mcpDefs, writeMode);
   const content = JSON.stringify({ mcpServers: servers }, null, 2) + '\n';
 
   if (!writeMode) {
@@ -304,6 +328,46 @@ function syncToMcpJson(mcpDefs, writeMode, destPath) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(destPath, content);
   console.log(`[ok] 已写入 ${destPath}`);
+}
+
+/** 将共享 MCP 定义合并写入 Claude Code 的 ~/.claude.json（顶层 + 各项目，实现全局生效）。 */
+function syncToClaudeMcp(mcpDefs, writeMode) {
+  const servers = buildMcpServers(mcpDefs, writeMode);
+  const claudeJson = expandHome('~/.claude.json');
+
+  if (!writeMode) {
+    console.log('# ~/.claude.json mcpServers (预览) — 使用 --write 写入');
+    console.log(JSON.stringify({ mcpServers: servers }, null, 2));
+    return;
+  }
+
+  let config = {};
+  if (fs.existsSync(claudeJson)) {
+    try {
+      config = JSON.parse(fs.readFileSync(claudeJson, 'utf8'));
+    } catch (e) {
+      console.warn('[warn] ~/.claude.json 不是有效 JSON，跳过:', e.message);
+      return;
+    }
+  }
+
+  // 顶层 mcpServers：兼容旧版全局语义
+  config.mcpServers = servers;
+  // 各项目 mcpServers：Claude Code 2.x 按项目读取
+  let projectCount = 0;
+  if (config.projects && typeof config.projects === 'object') {
+    for (const [projectPath, project] of Object.entries(config.projects)) {
+      if (project && typeof project === 'object') {
+        project.mcpServers = servers;
+        projectCount++;
+      }
+    }
+  }
+
+  const backupPath = `${claudeJson}.bak`;
+  if (fs.existsSync(claudeJson)) fs.copyFileSync(claudeJson, backupPath);
+  fs.writeFileSync(claudeJson, JSON.stringify(config, null, 2) + '\n');
+  console.log(`[ok] 已写入 ~/.claude.json 的 mcpServers（全局 + ${projectCount} 个项目），备份: ${backupPath}`);
 }
 
 /** 将共享 MCP 定义写入 cc-switch SQLite 数据库，供 cc-switch 管理界面识别。 */
@@ -365,11 +429,7 @@ ON CONFLICT(id) DO UPDATE SET
   fs.mkdirSync(path.dirname(backupPath), { recursive: true });
   fs.copyFileSync(dbPath, backupPath);
 
-  const result = spawnSync('sqlite3', [dbPath], { input: sql, encoding: 'utf8' });
-  if (result.status !== 0) {
-    console.warn('[warn] 写入 cc-switch MCP 失败:', result.stderr || result.stdout);
-    return;
-  }
+  if (!applySqlToCcSwitch(dbPath, sql, 'MCP')) return;
 
   console.log(`[ok] 已写入 ~/.cc-switch/cc-switch.db (mcp_servers 表)，备份: ${backupPath}`);
 }
@@ -442,29 +502,25 @@ ON CONFLICT(id) DO UPDATE SET
   fs.mkdirSync(path.dirname(backupPath), { recursive: true });
   fs.copyFileSync(dbPath, backupPath);
 
-  const result = spawnSync('sqlite3', [dbPath], { input: sql, encoding: 'utf8' });
-  if (result.status !== 0) {
-    console.warn('[warn] 写入 cc-switch Skills 失败:', result.stderr || result.stdout);
-    return;
-  }
+  if (!applySqlToCcSwitch(dbPath, sql, 'Skills')) return;
 
   console.log(`[ok] 已写入 ~/.cc-switch/cc-switch.db (skills 表，${skillDirs.length} 个)，备份: ${backupPath}`);
 }
 
-/** 计算 VS Code 用户级配置目录（跨平台：Windows / macOS / Linux）。 */
-function vscodeUserConfigDir() {
+/** 返回 VS Code 用户配置目录，兼容 Windows / macOS / Linux。 */
+function getVscodeUserDir() {
   if (process.platform === 'win32') {
     return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'Code', 'User');
   }
   if (process.platform === 'darwin') {
     return path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User');
   }
-  return path.join(os.homedir(), '.config', 'Code', 'User');
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'Code', 'User');
 }
 
 /** 将启用的共享 MCP 覆盖写入 VS Code 用户级 mcp.json。 */
 function syncToCopilotMcp(mcpDefs, writeMode) {
-  const mcpPath = path.join(vscodeUserConfigDir(), 'mcp.json');
+  const mcpPath = path.join(getVscodeUserDir(), 'mcp.json');
   const sharedServers = {};
   for (const [name, def] of Object.entries(mcpDefs)) {
     if (def.type === 'local') {
@@ -484,11 +540,15 @@ function syncToCopilotMcp(mcpDefs, writeMode) {
 
   let config = { servers: {}, inputs: [] };
   if (fs.existsSync(mcpPath)) {
-    try {
-      config = JSON.parse(fs.readFileSync(mcpPath, 'utf8'));
-    } catch (error) {
-      console.warn(`[warn] VS Code MCP 配置不是有效 JSON，跳过: ${mcpPath}: ${error.message}`);
-      return;
+    const raw = fs.readFileSync(mcpPath, 'utf8');
+    // 空文件（如 VS Code 生成的占位）视为空配置，继续覆盖写入。
+    if (raw.trim() !== '') {
+      try {
+        config = JSON.parse(raw);
+      } catch (error) {
+        console.warn(`[warn] VS Code MCP 配置不是有效 JSON，跳过: ${mcpPath}: ${error.message}`);
+        return;
+      }
     }
   }
   const previousCount = Object.keys(config.servers || {}).length;
@@ -654,17 +714,20 @@ ${instructionBody}\n`;
 function ensureSymlink(src, dst) {
   if (!fs.existsSync(src)) return false;
   const srcAbs = path.resolve(src);
+  // Windows 上创建符号链接需要管理员权限，改用 junction（目录联接）避免 EPERM
+  const linkType = process.platform === 'win32' ? 'junction' : 'dir';
+  const makeLink = () => fs.symlinkSync(srcAbs, dst, linkType);
   try {
     const current = fs.readlinkSync(dst);
     if (current === srcAbs || current === srcAbs + path.sep) return false;
     fs.unlinkSync(dst);
-    fs.symlinkSync(srcAbs, dst);
+    makeLink();
     return true;
   } catch (e) {
-    if (e.code === 'ENOENT') { fs.symlinkSync(srcAbs, dst); return true; }
+    if (e.code === 'ENOENT') { makeLink(); return true; }
     if (e.code === 'EINVAL' && fs.existsSync(dst)) {
       fs.rmSync(dst, { recursive: true, force: true });
-      fs.symlinkSync(srcAbs, dst);
+      makeLink();
       return true;
     }
     console.error(`[warn] 符号链接失败 ${dst}: ${e.message}`);
@@ -689,10 +752,12 @@ function syncFilesystem(writeMode, enabledSkills = {}) {
 
   const targets = [];
 
-  // Kilo
+  // Kilo（未安装则跳过，避免创建无意义的空目录）
   const kiloDir = expandHome('~/.config/kilo');
-  targets.push({ dest: path.join(kiloDir, 'skills'), src: SKILLS, label: 'Kilo skills' });
-  targets.push({ dest: path.join(kiloDir, 'commands'), src: COMMANDS, label: 'Kilo commands' });
+  if (fs.existsSync(path.join(kiloDir, 'kilo.jsonc'))) {
+    targets.push({ dest: path.join(kiloDir, 'skills'), src: SKILLS, label: 'Kilo skills' });
+    targets.push({ dest: path.join(kiloDir, 'commands'), src: COMMANDS, label: 'Kilo commands' });
+  }
 
   // Codex
   const codexDir = expandHome('~/.codex');
@@ -785,7 +850,7 @@ switch (target) {
     syncToCodex(resolved, writeMode);
     break;
   case 'claude':
-    syncToMcpJson(resolved, writeMode, expandHome('~/.mcp.json'));
+    syncToClaudeMcp(resolved, writeMode);
     break;
   case 'copilot':
     syncToCopilotMcp(resolved, writeMode);
@@ -806,7 +871,7 @@ switch (target) {
     if (writeMode) console.log('');
     syncToCodex(resolved, writeMode);
     if (writeMode) console.log('');
-    syncToMcpJson(resolved, writeMode, expandHome('~/.mcp.json'));
+    syncToClaudeMcp(resolved, writeMode);
     if (writeMode) console.log('');
     syncToCcSwitch(resolved, writeMode);
     if (writeMode) console.log('');
