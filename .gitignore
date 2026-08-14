@@ -1,0 +1,28 @@
+# 密钥文件
+mcp/secrets.env
+mcp/mcp-servers.local.jsonc
+mcp/session-bridge-secrets.jsonc
+**/.env
+**/.env.*
+!**/.env.example
+**/*-secrets.*
+**/*.local.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# 备份
+backups/
+
+# Python 产物
+__pycache__/
+.venv/
+*.pyc
+
+# Node 依赖
+node_modules/
+
+# OS
+.DS_Store
+settings.json

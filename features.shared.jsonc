@@ -1,0 +1,25 @@
+{
+  // 统一控制同步时哪些 MCP 和 Skills 写入下游。
+  // 只有明确为 true 的 MCP 和 Skill 才同步；未列出或 false 均不同步。
+  "mcp": {
+    "codegraph": true,
+    "mastergo-magic-mcp": false,
+    "session-bridge": true,
+    "yapi-auto-mcp": true,
+    "memos-api-mcp": true,
+    "zentao": false,
+    "zentao-11-3": true,
+    "zentao-aipper": false,
+    "yuque": false
+  },
+  "skills": {
+    "browser-act": false,
+    "browser-skill": false,
+    "find-skills": true,
+    "frontend-design-agent": true,
+    "loop": true,
+    "memos": true,
+    "skill-vetter": true,
+    "zentao-mcp-tasks": true
+  }
+}

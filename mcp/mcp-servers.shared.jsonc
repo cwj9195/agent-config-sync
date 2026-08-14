@@ -1,0 +1,119 @@
+{
+  // MCP 服务器共享定义。密钥使用 __PLACEHOLDER__ 占位。
+  // 实际密钥在 mcp/secrets.env 中（已 .gitignore）。
+  "codegraph": {
+    "type": "local",
+    "command": [
+      "codegraph",
+      "serve",
+      "--mcp"
+    ],
+    "enabled": true
+  },
+  "mastergo-magic-mcp": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "@mastergo/magic-mcp",
+      "--token=__MASTERGO_TOKEN__",
+      "--url=https://mastergo.com"
+    ],
+    "environment": {
+      "MASTERGO_MCP_TIMEOUT_MS": "120000"
+    },
+    "enabled": true
+  },
+  "session-bridge": {
+    "type": "local",
+    "command": [
+      "node",
+      "~/.config/shared-agent-config/mcp/session-bridge/mcp-server.mjs"
+    ],
+    "enabled": true
+  },
+  "yapi-auto-mcp": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "--registry=https://registry.npmjs.org",
+      "yapi-auto-mcp",
+      "--stdio",
+      "--yapi-base-url=__YAPI_BASE_URL__",
+      "--yapi-token=__YAPI_TOKEN__"
+    ],
+    "enabled": true
+  },
+  "memos-api-mcp": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "@memtensor/memos-api-mcp@latest"
+    ],
+    "environment": {
+      "MEMOS_API_KEY": "__MEMOS_API_KEY__",
+      "MEMOS_USER_ID": "__MEMOS_USER_ID__",
+      "MEMOS_CHANNEL": "__MEMOS_CHANNEL__"
+    },
+    "enabled": true
+  },
+  "zentao": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "zentao-mcp"
+    ],
+    "environment": {
+      "ZENTAO_BASE_URL": "__ZENTAO_BASE_URL__",
+      "ZENTAO_ACCOUNT": "__ZENTAO_ACCOUNT__",
+      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__"
+    },
+    "enabled": false
+  },
+  "zentao-11-3": {
+    "type": "local",
+    "command": [
+      // "npx",
+      // "-y",
+      // "@maxenlin/mcp-zentao-11-3@1.0.4",
+      "node",
+      "~/.config/shared-agent-config/mcp/zentao-11-3/dist/index.js"
+    ],
+    "environment": {
+      "ZENTAO_URL": "__ZENTAO_BASE_URL__",
+      "ZENTAO_USERNAME": "__ZENTAO_ACCOUNT__",
+      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
+      "ZENTAO_TIMEOUT_MS": "30000",
+      "ZENTAO_SESSION_TTL_MS": "3000000"
+    },
+    "enabled": true
+  },
+  "zentao-aipper": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "@aipper/zentao-mcp-server@0.1.26"
+    ],
+    "environment": {
+      "ZENTAO_BASE_URL": "__ZENTAO_BASE_ORIGIN__",
+      "ZENTAO_API_PREFIX": "__ZENTAO_API_PREFIX__",
+      "ZENTAO_TOKEN_PATH": "__ZENTAO_TOKEN_PATH__",
+      "ZENTAO_ACCOUNT": "__ZENTAO_ACCOUNT__",
+      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
+      "ZENTAO_DEFAULT_RESOLVED_BUILD": "trunk"
+    },
+    "enabled": true
+  },
+  "yuque": {
+    "type": "remote",
+    "url": "https://yuque.example.com/api/v2",
+    "headers": {
+      "X-Auth-Token": "__YUQUE_TOKEN__"
+    },
+    "enabled": true
+  }
+}
