@@ -830,6 +830,68 @@ function syncFilesystem(writeMode, enabledSkills = {}) {
   }
 }
 
+/** 将值序列化为 YAML 单引号字符串，避免冒号、井号等被误解析。 */
+function yamlString(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+/** 将共享 MCP 定义转换为 DSH cordis.patch.yml 的 insert 列表并写入 ~/.dsh/cordis.patch.yml。 */
+function syncToDsh(mcpDefs, writeMode) {
+  const dshHome = expandHome('~/.dsh');
+  const patchPath = path.join(dshHome, 'cordis.patch.yml');
+
+  const lines = [
+    '# 由 shared-agent-config/scripts/sync.mjs 生成的用户级 patch 层（作用于所有 profile），',
+    '# 在 profile 的 cordis.patch.yml 之后叠加。将启用的共享 MCP 供应商以',
+    '# @deepseek-ai/dsh-mcp-client 桥接进 DSH，工具以 mcp__<serverName>__<tool> 暴露给模型。',
+    '# 请勿手工编辑：改动请在 mcp-servers.shared.jsonc + secrets.env + features.shared.jsonc 完成。',
+    '- insert:',
+  ];
+
+  const sourceDefs = writeMode ? mcpDefs : redactMcpDefsForPreview(mcpDefs);
+  for (const [name, def] of Object.entries(sourceDefs)) {
+    const serverName = name.replace(/[^A-Za-z0-9_-]/g, '-');
+    lines.push(`    - id: mcp-${serverName}`);
+    lines.push(`      name: '@deepseek-ai/dsh-mcp-client'`);
+    lines.push(`      config:`);
+    lines.push(`        serverName: ${yamlString(serverName)}`);
+    if (def.type === 'local') {
+      lines.push(`        transport: 'stdio'`);
+      lines.push(`        command: ${yamlString(def.command[0])}`);
+      const args = def.command.slice(1);
+      if (args.length === 1) {
+        lines.push(`        args: [${yamlString(args[0])}]`);
+      } else if (args.length > 1) {
+        lines.push(`        args:`);
+        for (const a of args) lines.push(`          - ${yamlString(a)}`);
+      }
+      if (def.environment && Object.keys(def.environment).length > 0) {
+        lines.push(`        env:`);
+        for (const [k, v] of Object.entries(def.environment)) lines.push(`          ${k}: ${yamlString(v)}`);
+      }
+    } else if (def.type === 'remote') {
+      lines.push(`        transport: 'streamable-http'`);
+      lines.push(`        url: ${yamlString(def.url)}`);
+      if (def.headers && Object.keys(def.headers).length > 0) {
+        lines.push(`        headers:`);
+        for (const [k, v] of Object.entries(def.headers)) lines.push(`          ${k}: ${yamlString(v)}`);
+      }
+    }
+  }
+
+  const content = lines.join('\n') + '\n';
+
+  if (!writeMode) {
+    console.log(`# DSH cordis.patch.yml (预览) -> ${patchPath}`);
+    console.log(content);
+    return;
+  }
+
+  fs.mkdirSync(dshHome, { recursive: true });
+  fs.writeFileSync(patchPath, content);
+  console.log(`[ok] 已写入 ${patchPath} (${Object.keys(mcpDefs).length} 个 MCP 供应商)`);
+}
+
 // --- main ---
 const args = process.argv.slice(2);
 const target = args[0];
@@ -851,6 +913,9 @@ switch (target) {
     break;
   case 'claude':
     syncToClaudeMcp(resolved, writeMode);
+    break;
+  case 'dsh':
+    syncToDsh(resolved, writeMode);
     break;
   case 'copilot':
     syncToCopilotMcp(resolved, writeMode);
@@ -884,8 +949,10 @@ switch (target) {
     syncToCopilot(writeMode);
     if (writeMode) console.log('');
     syncCopilotSkills(writeMode, enabledSkills);
+    if (writeMode) console.log('');
+    syncToDsh(resolved, writeMode);
     break;
   default:
-    console.error('用法: node sync.mjs <kilo|codex|claude|copilot|cc-switch|all> [--write]');
+    console.error('用法: node sync.mjs <kilo|codex|claude|copilot|cc-switch|dsh|all> [--write]');
     process.exit(1);
 }

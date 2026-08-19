@@ -52,6 +52,12 @@ export declare class ZentaoLegacyAPI {
      */
     private isSessionExpired;
     /**
+     * 判断禅道是否返回成功结果。
+     * @param responseData 禅道原始响应
+     * @returns 是否为成功响应
+     */
+    private isSuccessfulResponse;
+    /**
      * 解析禅道成功响应中的业务数据。
      * @param responseData 禅道原始响应
      * @param url 请求路径

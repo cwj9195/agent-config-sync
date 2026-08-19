@@ -174,13 +174,21 @@ export class ZentaoLegacyAPI {
         return false;
     }
     /**
+     * 判断禅道是否返回成功结果。
+     * @param responseData 禅道原始响应
+     * @returns 是否为成功响应
+     */
+    isSuccessfulResponse(responseData) {
+        return responseData?.status === 'success' || responseData?.result === 'success';
+    }
+    /**
      * 解析禅道成功响应中的业务数据。
      * @param responseData 禅道原始响应
      * @param url 请求路径
      * @returns 解析后的业务数据，缺少 data 时返回 undefined
      */
     parseResponseData(responseData, url) {
-        if (responseData?.status !== 'success') {
+        if (!this.isSuccessfulResponse(responseData)) {
             throw new Error(`请求失败: ${JSON.stringify(responseData)}`);
         }
         const rawData = responseData.data;
@@ -280,8 +288,9 @@ export class ZentaoLegacyAPI {
                 }
                 throw new Error('会话已过期，重新登录后仍然失败');
             }
-            if (response.data.status === 'success') {
-                return response.data.data ? JSON.parse(response.data.data) : response.data;
+            if (this.isSuccessfulResponse(response.data)) {
+                const parsedData = this.parseResponseData(response.data, url);
+                return parsedData === undefined ? response.data : parsedData;
             }
             throw new Error(`请求失败: ${JSON.stringify(response.data)}`);
         }
@@ -519,11 +528,15 @@ export class ZentaoLegacyAPI {
      * 解决Bug
      */
     async resolveBug(bugId, resolution) {
-        await this.postRequest(`/bug-resolve-${bugId}.json`, {
+        const body = {
             resolution: resolution.resolution,
-            resolvedBuild: resolution.resolvedBuild || '',
+            resolvedBuild: resolution.resolvedBuild || 'trunk',
             comment: resolution.comment || '',
-        });
+        };
+        if (resolution.resolution === 'duplicate' && resolution.duplicateBug) {
+            body.duplicateBug = resolution.duplicateBug;
+        }
+        await this.postRequest(`/bug-resolve-${bugId}.json`, body);
     }
     /**
      * 获取产品的需求列表（支持分页，自动获取所有需求）

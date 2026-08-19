@@ -90,7 +90,12 @@ const server = http.createServer((request, response) => {
 
   if (url.pathname === '/bug-resolve-18008.json') {
     resolveWrites += 1;
-    sendJson(response, 200, { status: 'success' });
+    sendJson(response, 200, {
+      result: 'success',
+      message: '保存成功',
+      closeModal: true,
+      load: '/zentao/bug-view-18046.json',
+    });
     return;
   }
 
