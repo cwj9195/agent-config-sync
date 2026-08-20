@@ -1,6 +1,6 @@
 # Agent 拓展包
 
-> 这是长期记忆文件，保存基础包之外的稳定偏好、经验沉淀和项目规则索引。基础包路径：`~/.config/shared-agent-config/prompts/agent.md`。
+> 这是长期记忆文件，保存基础包之外的稳定偏好、经验沉淀和项目规则索引。基础包路径：`/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/agent.md`。
 
 ## 目录
 
@@ -43,7 +43,7 @@
 | 内容                                                                                                 | 来源                                               | 适用范围 | 状态 | 最后确认时间 |
 | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------- | ---- | ------------ |
 | 用"主人"作为基础包加载偏离的可见信号；如果称呼缺失，应优先检查基础包是否被读取。                     | 用户粘贴的 Istishia 评论；会话确认                 | 全部会话 | 有效 | 2026-06-12   |
-| 结束报告除完成内容与验证结果外，应包含风险、Regression Check、Defensive Code、是否建议沉淀长期记忆。 | `~/.config/shared-agent-config/prompts/agent.md`；会话确认 | 全部会话 | 有效 | 2026-06-12   |
+| 结束报告除完成内容与验证结果外，应包含风险、Regression Check、Defensive Code、是否建议沉淀长期记忆。 | `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/agent.md`；会话确认 | 全部会话 | 有效 | 2026-06-12   |
 | 称呼缺失信号**主要服务用户外部监督**，非 agent 可靠自检器。2026-06-20 实证：连续 5 轮漏叫主人时 agent 未依本条自纠，由用户指出才纠正。根因（悖论）：要求"会漏规则的 agent"自检"漏规则"，自检这步也会漏；注意力被技术任务占满时规则自检随之失效。可靠纠正=用户反馈闭环；harness 级强制 > 规则驱动。 | 本会话实证 | 全部会话 | 有效 | 2026-06-20 |
 
 ## 3. 记忆体系维护经验
@@ -69,7 +69,7 @@
 
 | 内容                                                                               | 来源                                     | 适用范围             | 状态 | 最后确认时间 |
 | ---------------------------------------------------------------------------------- | ---------------------------------------- | -------------------- | ---- | ------------ |
-| 修改 skills 或 MCP 配置时，优先修改 shared-agent-config 源信息；下游同步产物不作为主编辑点。 | `~/.config/shared-agent-config/prompts/agent.md` | skills、MCP 配置维护 | 有效 | 2026-07-03   |
+| 修改 skills 或 MCP 配置时，优先修改 shared-agent-config 源信息；下游同步产物不作为主编辑点。 | `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/agent.md` | skills、MCP 配置维护 | 有效 | 2026-07-03   |
 | 工作树可能已有用户改动；执行修改前后都要避免回滚无关变更。                         | 系统协作规则；会话确认                   | 所有代码变更         | 有效 | 2026-06-12   |
 
 ## 5. 项目规则索引
@@ -124,7 +124,7 @@
 
 ### 7.2 MCP 配置管理（单一源 = shared-agent-config）
 
-- **唯一事实来源**：`~/.config/shared-agent-config/mcp/mcp-servers.shared.jsonc` + `mcp/secrets.env`。
+- **唯一事实来源**：`/Users/amoy/Desktop/project/cwj/agent-config-sync/mcp/mcp-servers.shared.jsonc` + `mcp/secrets.env`。
 - **修改流程**：只改 shared 定义文件 → `scripts/sync-mcp.mjs all --write` 同步到 Kilo/Codex/cc-switch.db。
 - **cc-switch.db 角色降级**：仅作为 cc-switch 运行时读取的本地缓存，由 sync 脚本保持与 shared 一致。不再作为独立配置源。
 
@@ -165,7 +165,7 @@ cli-continues(1271⭐,Node,MIT) / casr(79,Rust) / ctxmv(32,Swift) / agent-migrat
 - 通用做法：`current_session` 探测式，按适配器顺序试每个工具特征（env / _meta key），返回首个命中。
 
 ### 8.5 session-bridge MCP 落地（v0.2.0 适配器化重构后，2026-06-18）
-- **权威源**：`~/.config/shared-agent-config/mcp/session-bridge/mcp-server.mjs`（~420 行，零依赖 Node ESM）。`~/.codex/handoff/` 是历史遗留死副本，**已删**（db 不引用）。
+- **权威源**：`/Users/amoy/Desktop/project/cwj/agent-config-sync/mcp/session-bridge/mcp-server.mjs`（~420 行，零依赖 Node ESM）。`~/.codex/handoff/` 是历史遗留死副本，**已删**（db 不引用）。
 - 工具：list_sessions / read_session(id, source?, since?, max_chars?) / current_session。read 默认输出上限 60000 字符（超限截断+提示），max_chars 可覆盖。
 - 水位：`~/.cache/session-bridge/watermark.json`（XDG 运行时目录，首次自动从旧路径迁移，旧文件保留兜底），**不再写源码目录**。
 - 注册：cc-switch.db mcp_servers，id=session-bridge，cc+codex 启用。

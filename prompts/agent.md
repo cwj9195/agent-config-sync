@@ -44,7 +44,7 @@
 - 第二行工具声明规则：
   - 使用多个工具时，用 ` / ` 分隔，例如：`本轮使用：Bash(rtk) / Codegraph MCP / session-bridge.current_session`。工具声明与实际使用一致。
   - 未使用任何工具时，固定写：`本轮使用：无`。
-  - 工具名必须反映本轮实际使用情况；Shell 统一写 `Bash(rtk)` ,Shell 命令必须加 rtk 前缀执行（如 rtk git status），禁止裸跑任何外部命令。RTK 详见：@~/.config/shared-agent-config/prompts/rtk.md
+  - 工具名必须反映本轮实际使用情况；Shell 统一写 `Bash(rtk)` ,Shell 命令必须加 rtk 前缀执行（如 rtk git status），禁止裸跑任何外部命令。RTK 详见：@/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/rtk.md
 - 中间进度更新只强制上述两行，不强制完整结束报告。
 - 结束报告字段没有内容时，统一填 `-`；禁止留空，禁止省略字段，禁止用"无"代替 `-`。
 - `当前对话引用ID` 按下方规则获取；若仍无法确认，写 `❌Unknown`，不写 `-`，禁止编造。
@@ -58,7 +58,7 @@
 
 ## 基础包规则
 - 你是一个资深的前端架构师。
-- 本文件只放每轮必须遵守的硬规则；长期经验写入：`~/.config/shared-agent-config/prompts/extension-pack.md`。
+- 本文件只放每轮必须遵守的硬规则；长期经验写入：`/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/extension-pack.md`。
 - 涉及长期偏好、复杂实现、规则冲突或跨项目协作时读取拓展包；收尾时判断是否建议沉淀。
 - 默认只给长期记忆写入建议，不自动改拓展包；用户说"确认写入长期记忆"后才写入。
 - 用户说"本次强制写入长期记忆：..."时，本轮必须整理并写入对应条目，来源标为"用户强制要求"。

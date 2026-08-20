@@ -28,7 +28,7 @@
     "type": "local",
     "command": [
       "node",
-      "~/.config/shared-agent-config/mcp/session-bridge/mcp-server.mjs"
+      "__REPO_DIR__/mcp/session-bridge/mcp-server.mjs"
     ],
     "enabled": true
   },
@@ -80,7 +80,7 @@
       // "-y",
       // "@maxenlin/mcp-zentao-11-3@1.0.4",
       "node",
-      "~/.config/shared-agent-config/mcp/zentao-11-3/dist/index.js"
+      "__REPO_DIR__/mcp/zentao-11-3/dist/index.js"
     ],
     "environment": {
       "ZENTAO_URL": "__ZENTAO_BASE_URL__",
