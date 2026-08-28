@@ -87,24 +87,40 @@
 
 ### 5.1 PIM VXE 组件缺失报错：依赖图未收敛
 
-> 来源：用户确认的问题沉淀；适用范围：`web-base` 中 `vxe-table` / `vxe-pc-ui` 依赖与 VxeUI 注册；状态：项目限定；最后确认时间：2026-08-06。
+> 来源：用户确认的问题沉淀；适用范围：`web-base` 中 `vxe-table` / `vxe-pc-ui` 依赖与 VxeUI 注册；状态：项目限定；最后确认时间：2026-08-20。
 
-**问题**：PIM 页面控制台提示缺少 `vxe-pager`、`vxe-button`、`vxe-num-input`、`vxe-radio-group`。早期“恢复高版本”的判断不准确；用户的降级动作是看到报错后的应急处理，不是根因。
+**问题**：PIM 页面控制台提示 `[vxe table] [grid] 缺少 "vxe-pager" 组件`（历史也报过 `vxe-button`、`vxe-num-input`、`vxe-radio-group`）。业务 `main.ts` 的 `VxeUIBase`、`VxeUITable` 注册代码仍在，问题不在业务注册。
 
 **根因**：
 
-- `main.ts` 中的 `VxeUIBase`、`VxeUITable` 注册代码仍然存在，业务注册代码不是问题。
-- 只修改 `package.json` 不会自动恢复 `pnpm-lock.yaml` 和实际 `node_modules`。
-- 混合依赖树中，`vxe-pc-ui` 与 `vxe-table` 解析到不同版本的 `@vxe-ui/core`，形成两个 VxeUI 单例；组件注册在一个实例上，表格从另一个实例查找，因此运行时认为组件缺失。
-- 实际曾出现 `@vxe-ui/core` `4.4.19` 与 `4.4.12` 并存，以及 `vxe-table` 仍链接到 `vxe-pc-ui` `4.16.25`。
+- `vxe-table@4.20.x` 的 `package.json` 完全移除了 `dependencies` 和 `peerDependencies`（连 `vxe-pc-ui` 都不声明），但产物仍 `import { VxeUI } from '@vxe-ui/core'`。这是上游漏声明依赖的 bug。
+- pnpm 严格隔离下，`vxe-table` 内部与 `vxe-pc-ui` 内部的 `@vxe-ui/core` 解析到不同物理包，形成两个 VxeUI 单例；组件注册在 A 实例、表格从 B 实例查找，运行时认为组件缺失。
+- 而 `vxe-table@4.19.25` 正常声明 `dependencies: { "vxe-pc-ui": "^4.14.0" }`，链条完整。
+- 只改 `package.json` 但未落盘时，`pnpm install` 读到旧值不会生效（见 §9 文件编辑落盘经验）。
 
-**已验证修复**：固定 `vxe-pc-ui@4.14.8`、`vxe-table@4.18.13`、`xe-utils@4.0.7`，收敛为：
+**已验证修复（组件库层面收敛，2026-08-20）**：
 
-`vxe-table@4.18.13 -> vxe-pc-ui@4.14.8 -> @vxe-ui/core@4.4.12 -> xe-utils@4.0.7`
+收敛组合：`vxe-table@4.19.25 -> vxe-pc-ui@4.16.27 -> @vxe-ui/core@4.4.19 -> xe-utils@4.0.12`
 
-执行 `pnpm install --frozen-lockfile`；实际软链接残留旧版本时，再执行 `pnpm install --force --frozen-lockfile`。验证 `pnpm why @vxe-ui/core` 只有一个版本，两个包的 `VxeUI` 实例一致，并通过 development build。
+1. 组件库 `tc-design-web` 的 `peerDependencies` 补 `@vxe-ui/core: ~4.4.19`，收紧 `vxe-pc-ui ~4.16.27` / `vxe-table ~4.19.25` / `xe-utils ~4.0.12`，`devDependencies` 同步对齐。
+2. 消费侧 `web-base` 显式声明 `@vxe-ui/core: 4.4.19`，`vxe-table` 降级 4.19.25，`vite.config.ts` 启用 `resolve.dedupe`（含 `@vxe-ui/core`）。
+3. `pnpm install` 后验证 `pnpm why @vxe-ui/core` 唯一、根 `node_modules/@vxe-ui/core` 与 `vxe-pc-ui` 内部指向同一物理路径（单例唯一）。
 
-**预防**：`package.json` 与 `pnpm-lock.yaml` 一起提交；安装和 CI 使用 frozen install；升级 VXE 后检查 `pnpm why @vxe-ui/core`；增加 VxeUI 实例一致性检查；遇到组件缺失先查依赖树、模块解析路径和单例，不在 `table.vue` 中逐个补注册。
+**历史版本**：2026-08-06 曾收敛到 `vxe-table@4.18.13 -> vxe-pc-ui@4.14.8 -> @vxe-ui/core@4.4.12 -> xe-utils@4.0.7`，后被 4.19.25 组合取代。
+
+**预防**：`package.json` 与 `pnpm-lock.yaml` 一起提交；升级 VXE 前先确认上游是否声明依赖（4.20.x 漏声明）；安装后检查 `pnpm why @vxe-ui/core` 唯一；遇到组件缺失先查依赖树与单例，不在 `table.vue` 中逐个补注册。
+
+### 5.2 PIM Form 标签 Tooltip 事件被禁用
+
+> 来源：用户明确要求沉淀；适用范围：`web-base` 中 `tc-design-web Form` 的字段标签交互；状态：项目限定；最后确认时间：2026-08-20。
+
+**问题**：字段 `label` 中的 `Tooltip` 可以正常渲染图标，但鼠标移入没有提示。
+
+**根因**：`packages/tc-design-web/components/form/form.tsx` 的内嵌样式将 `.ant-col.ant-form-item-label` 设置为 `pointer-events: none`，表单标签区域及其默认子节点无法接收鼠标事件；`FormItemLabel` 本身不会把 `VNode` 标签转成文本。
+
+**处理**：只给需要交互的提示触发节点增加 `pointer-events-auto`，保留表单标签区域原有行为；图标颜色通过渲染函数参数控制，编辑页和详情抽屉可分别配置。
+
+**验证**：业务文件、`tc-design-web` Form 文件和 `ant-design-vue` `FormItemLabel` 文件均通过错误检查；未修改公共 Form 的全局指针事件策略。
 
 ## 6. 待确认事项
 

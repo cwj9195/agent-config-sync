@@ -24,6 +24,16 @@
     },
     "enabled": true
   },
+  "mastergo-vibe-mcp": {
+    "type": "local",
+    "command": [
+      "npx",
+      "-y",
+      "@mastergo/vibe-mcp",
+      "--url=http://localhost:50678"
+    ],
+    "enabled": true
+  },
   "session-bridge": {
     "type": "local",
     "command": [

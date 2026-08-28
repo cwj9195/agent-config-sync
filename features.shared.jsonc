@@ -4,6 +4,7 @@
   "mcp": {
     "codegraph": true,
     "mastergo-magic-mcp": false,
+    "mastergo-vibe-mcp": true,
     "session-bridge": true,
     "yapi-auto-mcp": true,
     "memos-api-mcp": true,
