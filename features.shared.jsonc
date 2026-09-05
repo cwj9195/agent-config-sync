@@ -10,17 +10,19 @@
     "memos-api-mcp": true,
     "zentao": false,
     "zentao-11-3": true,
+    "zentao-rest-v1": true,
     "zentao-aipper": false,
     "yuque": false
   },
   "skills": {
     "browser-act": false,
-    "browser-skill": false,
+    "browser-skill": true,
     "find-skills": true,
     "frontend-design-agent": true,
     "loop": true,
     "memos": true,
     "skill-vetter": true,
+    "zentao-v1": true,
     "zentao-mcp-tasks": true
   }
 }

@@ -101,6 +101,21 @@
     },
     "enabled": true
   },
+  "zentao-rest-v1": {
+    "type": "local",
+    "command": [
+      "node",
+      "__REPO_DIR__/mcp/zentao-rest-v1/dist/index.js"
+    ],
+    "environment": {
+      "ZENTAO_URL": "__ZENTAO_BASE_URL__",
+      "ZENTAO_USERNAME": "__ZENTAO_ACCOUNT__",
+      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
+      "ZENTAO_TIMEOUT_MS": "30000",
+      "ZENTAO_SESSION_TTL_MS": "3000000"
+    },
+    "enabled": true
+  },
   "zentao-aipper": {
     "type": "local",
     "command": [
