@@ -37,8 +37,9 @@
   "session-bridge": {
     "type": "local",
     "command": [
-      "node",
-      "__REPO_DIR__/mcp/session-bridge/mcp-server.mjs"
+      "npx",
+      "-y",
+      "session-bridge-mcp@0.2.0"
     ],
     "enabled": true
   },
@@ -69,43 +70,12 @@
     },
     "enabled": true
   },
-  "zentao": {
-    "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "zentao-mcp"
-    ],
-    "environment": {
-      "ZENTAO_BASE_URL": "__ZENTAO_BASE_URL__",
-      "ZENTAO_ACCOUNT": "__ZENTAO_ACCOUNT__",
-      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__"
-    },
-    "enabled": false
-  },
-  "zentao-11-3": {
-    "type": "local",
-    "command": [
-      // "npx",
-      // "-y",
-      // "@maxenlin/mcp-zentao-11-3@1.0.4",
-      "node",
-      "__REPO_DIR__/mcp/zentao-11-3/dist/index.js"
-    ],
-    "environment": {
-      "ZENTAO_URL": "__ZENTAO_BASE_URL__",
-      "ZENTAO_USERNAME": "__ZENTAO_ACCOUNT__",
-      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
-      "ZENTAO_TIMEOUT_MS": "30000",
-      "ZENTAO_SESSION_TTL_MS": "3000000"
-    },
-    "enabled": true
-  },
   "zentao-rest-v1": {
     "type": "local",
     "command": [
-      "node",
-      "__REPO_DIR__/mcp/zentao-rest-v1/dist/index.js"
+      "npx",
+      "-y",
+      "zentao-rest-v1-mcp@1.0.1"
     ],
     "environment": {
       "ZENTAO_URL": "__ZENTAO_BASE_URL__",
@@ -113,23 +83,6 @@
       "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
       "ZENTAO_TIMEOUT_MS": "30000",
       "ZENTAO_SESSION_TTL_MS": "3000000"
-    },
-    "enabled": true
-  },
-  "zentao-aipper": {
-    "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "@aipper/zentao-mcp-server@0.1.26"
-    ],
-    "environment": {
-      "ZENTAO_BASE_URL": "__ZENTAO_BASE_ORIGIN__",
-      "ZENTAO_API_PREFIX": "__ZENTAO_API_PREFIX__",
-      "ZENTAO_TOKEN_PATH": "__ZENTAO_TOKEN_PATH__",
-      "ZENTAO_ACCOUNT": "__ZENTAO_ACCOUNT__",
-      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
-      "ZENTAO_DEFAULT_RESOLVED_BUILD": "trunk"
     },
     "enabled": true
   },

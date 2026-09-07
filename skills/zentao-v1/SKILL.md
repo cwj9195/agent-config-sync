@@ -8,7 +8,7 @@ disable-model-invocation: false
 
 # ZenTao REST v1 MCP
 
-只使用 `zentao-rest-v1` MCP。它优先调用禅道 REST v1，只有明确的 v1 路由不兼容时才由适配器回退 Legacy；不得切换到 `zentao-11-3`、`zentao-aipper` 或其他禅道 MCP。
+只使用 `zentao-rest-v1` MCP。它优先调用禅道 REST v1，只有明确的 v1 路由不兼容时才由适配器回退 Legacy；不得切换到 `zentao-aipper` 或其他禅道 MCP。
 
 默认账号为 `caiwenjia`（蔡文嘉）。不得在技能、脚本、日志或回复中保存或输出密码、Token、Cookie、会话密钥或完整认证请求头。
 
@@ -17,7 +17,7 @@ disable-model-invocation: false
 按当前 MCP 工具清单使用同名工具，不要臆造工具名。核心路由如下：
 
 - 读取：`getBugDetail`、`getTaskDetail`、`getMyBugs`、`getMyTasks`、`getProductBugs`、`getProductStories`、`getStoryDetail`、`getTestCaseDetail`、`getTestTaskDetail`、`getTestTaskResults`。
-- 任务写入：`createTask`、`updateTask`、`finishTask`。
+- 任务写入：`createTask`、`updateTask`、`startTask`、`finishTask`、`closeTask`。
 - Bug 写入：`updateBug`、`resolveBug`。
 - 测试写入：`createTestCase`、`runTestCase`。
 - 兼容和辅助工具：按当前清单调用；未覆盖的 REST v1 能力由适配器按规则回退 Legacy。
@@ -39,6 +39,19 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 
 适配器只在明确的 REST v1 路由不兼容时回退 Legacy。认证失败、参数校验失败或写入结果不明时不得自动换通道重试。
 
+任务从创建到关闭的完整状态流转、时间字段和失败停止条件，必须遵循 [references/task-lifecycle.md](references/task-lifecycle.md)。
+
+## 日常任务默认规则
+
+仅对日常或空白任务生效；需求拆分、Bug 修复和用户明确指定的字段优先级更高：
+
+- 任务名称默认保留一个 `【类型】` 前缀；已有前缀时不重复添加。
+- 负责人默认使用当前账号 `caiwenjia`（蔡文嘉）。
+- 日期默认使用当天，预计开始和截止日期均为当天。
+- 工作时间约定为当天 `08:00–20:30`；创建任务使用日期字段，完成任务时必须提交实际完成日期时间，不能只传日期。
+- 描述默认为空；用户提供描述时才提交。
+- 编号内容默认合并为一条任务名称，不自动拆成多条任务。
+
 ## 创建日常任务
 
 日常或空白任务直接使用 `createTask`，至少需要用户明确提供：
@@ -50,6 +63,15 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 可选字段包括负责人账号、预计工时、预计开始、截止日期、优先级、模块、需求、父任务和描述。页面“事务”对应接口值 `affair`；蔡文嘉对应账号 `caiwenjia`。
 
 来源为需求或 Bug 时，先读取来源详情；只有工具实际返回新任务并完成回读，才能宣称创建成功。当前 `createTaskFromStory` 和 `createTaskFromBug` 若只返回手动操作建议，不得冒充自动写入成功。
+
+## 完成和关闭任务
+
+- 用户明确要求“完成并关闭”时，必须按 `createTask（如尚未创建）→ startTask（如为 wait）→ finishTask → closeTask` 顺序执行。
+- `wait` 只能先开始；`doing` 才能完成；`done` 才能关闭；每一步都要用 `getTaskDetail` 回读后再进入下一步。
+- `finishTask` 必须带回读得到的 `realStarted`，并提交明确晚于它的 `finishedDate`；不能只传日期 `YYYY-MM-DD`。
+- 任务完成后必须先回读为 `done`，再单独关闭并回读为 `closed`；失败或响应不明时停止，不盲目重试。
+
+详细流程和 21.7.x 时间校验见 [references/task-lifecycle.md](references/task-lifecycle.md)。
 
 ## 更新和解决 Bug
 
