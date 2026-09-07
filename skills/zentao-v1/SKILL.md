@@ -73,6 +73,12 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 
 详细流程和 21.7.x 时间校验见 [references/task-lifecycle.md](references/task-lifecycle.md)。
 
+## 任务地址输出
+
+- 任务创建、读取、更新、开始、完成或关闭并成功回读后，必须输出该任务的禅道地址。
+- 地址使用已核验的站点地址和任务 ID 生成：`<禅道站点地址>/task-view-<taskId>.html`。
+- 只有拿到真实任务 ID 并完成回读后，才能输出地址；写入未核验时不得生成成功链接。
+
 ## 更新和解决 Bug
 
 ### 更新属性
