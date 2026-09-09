@@ -1,7 +1,7 @@
 ---
 name: zentao-v1
 description: 通过 REST v1 优先、Legacy 兜底的 ZenTao MCP 查询和操作项目、执行、任务、Bug、需求与测试数据；适用于读取 Bug、创建任务、更新任务和解决 Bug 等禅道工作流。
-argument-hint: 禅道操作目标，例如：帮我读取 Bug 18508 或在执行 6837 创建日常任务
+argument-hint: 禅道操作目标，例如：帮我读取指定 Bug 或在指定执行创建日常任务
 user-invocable: true
 disable-model-invocation: false
 ---
@@ -10,7 +10,7 @@ disable-model-invocation: false
 
 只使用 `zentao-rest-v1` MCP。它优先调用禅道 REST v1，只有明确的 v1 路由不兼容时才由适配器回退 Legacy；不得切换到 `zentao-aipper` 或其他禅道 MCP。
 
-默认账号为 `caiwenjia`（蔡文嘉）。不得在技能、脚本、日志或回复中保存或输出密码、Token、Cookie、会话密钥或完整认证请求头。
+负责人和查询账号默认使用当前 MCP 连接实际认证账号。不得在技能、脚本、日志或回复中保存或输出个人账号、姓名、密码、Token、Cookie、会话密钥或完整认证请求头。
 
 ## 工具路由
 
@@ -46,7 +46,7 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 仅对日常或空白任务生效；需求拆分、Bug 修复和用户明确指定的字段优先级更高：
 
 - 任务名称默认保留一个 `【类型】` 前缀；已有前缀时不重复添加。
-- 负责人默认使用当前账号 `caiwenjia`（蔡文嘉）。
+- 负责人默认使用当前 MCP 连接账号；无法确认当前账号时询问用户，不猜测账号。
 - 日期默认使用当天，预计开始和截止日期均为当天。
 - 工作时间约定为当天 `08:00–20:30`；创建任务使用日期字段，完成任务时必须提交实际完成日期时间，不能只传日期。
 - 描述默认为空；用户提供描述时才提交。
@@ -60,7 +60,7 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 - `name`
 - `type`
 
-可选字段包括负责人账号、预计工时、预计开始、截止日期、优先级、模块、需求、父任务和描述。页面“事务”对应接口值 `affair`；蔡文嘉对应账号 `caiwenjia`。
+可选字段包括负责人账号、预计工时、预计开始、截止日期、优先级、模块、需求、父任务和描述。页面“事务”对应接口值 `affair`。
 
 来源为需求或 Bug 时，先读取来源详情；只有工具实际返回新任务并完成回读，才能宣称创建成功。当前 `createTaskFromStory` 和 `createTaskFromBug` 若只返回手动操作建议，不得冒充自动写入成功。
 
@@ -95,7 +95,7 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 - 本次成功复现、确认根因、完成代码或配置修复，并通过回归验证；
 - 已有改动可追溯，解决版本准确，有回归证据，并得到用户明确确认。
 
-未满足门禁时不得调用 `resolveBug`，不得为了关闭 Bug 制造代码改动。解决备注严格使用：
+未满足门禁时不得调用 `resolveBug`，不得为了关闭 Bug 制造代码改动。解决备注必须连续三行书写，三行之间不得插入空行；接口 `comment` 使用单个换行符 `\n` 分隔，禁止使用连续换行符 `\n\n` 或 Markdown 段落。格式严格如下：
 
 ```text
 产生原因：<可验证的技术或业务根因>

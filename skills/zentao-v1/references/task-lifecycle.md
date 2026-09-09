@@ -42,7 +42,7 @@ READ → VALIDATE → PREPARE → CONFIRM → WRITE_ONCE → READ_BACK
 
 - 确认 `executionId`、任务名称和任务类型。
 - 页面“事务”映射为接口类型 `affair`。
-- 日常任务默认负责人为 `caiwenjia`。
+- 日常任务默认负责人为当前 MCP 连接账号；无法确认时先询问用户。
 - 任务名称保留一个 `【类型】` 前缀；已有前缀时不重复添加。
 - 用户提供的编号内容合并为一条任务名称，不自动拆分。
 
