@@ -107,6 +107,7 @@ function replacePlaceholders(mcpDefs, secrets) {
   const placeholders = [
     ['__AGENT_BROWSER_CDP__', secrets.AGENT_BROWSER_CDP || '9222'],
     ['__MASTERGO_TOKEN__', secrets.MASTERGO_TOKEN || ''],
+    ['__YAPI_BASE_URL__', secrets.YAPI_BASE_URL || ''],
     ['__YAPI_TOKEN__', secrets.YAPI_TOKEN || ''],
     ['__YUQUE_TOKEN__', secrets.YUQUE_TOKEN || ''],
     ['__YUQUE_BASE_URL__', secrets.YUQUE_BASE_URL || 'https://www.yuque.com/api/v2'],
