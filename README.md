@@ -1,4 +1,4 @@
-# Shared Agent Config
+# Agent Config Sync
 
 Kilo / Codex / Claude / Copilot / cc-switch 共享 AI Agent 配置仓库。单一事实来源，通过符号链接和同步脚本分发到各工具。
 

@@ -1,5 +1,5 @@
 {
-  "name": "shared-agent-config",
+  "name": "agent-config-sync",
   "version": "0.0.0",
   "private": true,
   "type": "module",

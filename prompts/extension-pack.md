@@ -53,13 +53,13 @@
 | 基础包过大会增加每轮上下文负担。                   | 基础包只保留硬规则；丰富偏好、踩坑经验和项目索引放拓展包，按需读取。 | 用户粘贴的 Istishia 评论；微信文章正文            | 全局 agent 记忆管理 | 有效 | 2026-06-12   |
 | 把一次性偏好写进长期规则，会污染后续会话。         | 写入前检查是否满足写入准入标准；不满足时只在当前任务内遵守。         | 微信文章正文；用户粘贴的 Istishia 评论            | 长期记忆维护        | 有效 | 2026-06-12   |
 | 只靠新会话临时说明，会导致偏好和踩坑经验反复丢失。 | 将稳定经验沉淀为可读取文件，并从基础包引用。                         | 微信文章正文《一个让Codex变得越来越聪明的小方法》 | 全局 agent 记忆管理 | 有效 | 2026-06-12   |
-| 用户说“沉淀”时，必须同时写入 `/Users/amoy/.config/shared-agent-config/prompts/extension-pack.md` 和 MemOS；写入后分别复核两边的核心内容是否一致。 | 双写后人工对照，当前未发现本扩展包与 MemOS 的自动同步机制；不写入密码、令牌、密钥等敏感信息。 | 用户明确要求；2026-08-06 会话确认 | 全部会话 | 有效 | 2026-08-06 |
+| 用户说“沉淀”时，必须同时写入 `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/extension-pack.md` 和 MemOS；写入后分别复核两边的核心内容是否一致。 | 双写后人工对照，当前未发现本扩展包与 MemOS 的自动同步机制；不写入密码、令牌、密钥等敏感信息。 | 用户明确要求；2026-08-06 会话确认 | 全部会话 | 有效 | 2026-08-06 |
 
 ### 3.1 “沉淀”双写与同步复核
 
 > 来源：用户明确要求；适用范围：所有需要长期沉淀的经验、偏好和项目规则；状态：有效；最后确认时间：2026-08-06。
 
-- 触发“沉淀”时，同时写入本扩展包 `/Users/amoy/.config/shared-agent-config/prompts/extension-pack.md` 和 MemOS。
+- 触发“沉淀”时，同时写入本扩展包 `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/extension-pack.md` 和 MemOS。
 - 两边记录同一组核心内容，至少包括问题/背景、原因、解决方案、验证结果和后续防护。
 - 写入后分别复核本地文件和 MemOS 返回结果，确认没有遗漏或相互矛盾的结论。
 - 当前未发现本扩展包与 MemOS 之间的自动同步机制，因此采用双写后人工对照，不能只写一边并声称已同步。
@@ -69,7 +69,7 @@
 
 | 内容                                                                               | 来源                                     | 适用范围             | 状态 | 最后确认时间 |
 | ---------------------------------------------------------------------------------- | ---------------------------------------- | -------------------- | ---- | ------------ |
-| 修改 skills 或 MCP 配置时，优先修改 shared-agent-config 源信息；下游同步产物不作为主编辑点。 | `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/agent.md` | skills、MCP 配置维护 | 有效 | 2026-07-03   |
+| 修改 skills 或 MCP 配置时，优先修改 agent-config-sync 源信息；下游同步产物不作为主编辑点。 | `/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/agent.md` | skills、MCP 配置维护 | 有效 | 2026-07-03   |
 | 工作树可能已有用户改动；执行修改前后都要避免回滚无关变更。                         | 系统协作规则；会话确认                   | 所有代码变更         | 有效 | 2026-06-12   |
 
 ## 5. 项目规则索引
@@ -138,7 +138,7 @@
 - initialize 的 protocolVersion **协商**：返回 client 发的版本（codex 要 2025-06-18，不能硬编码 2024-11-05）。
 - stdio 传输 = line-delimited JSON（newline 分隔），不是 LSP 的 Content-Length。
 
-### 7.2 MCP 配置管理（单一源 = shared-agent-config）
+### 7.2 MCP 配置管理（单一源 = agent-config-sync）
 
 - **唯一事实来源**：`/Users/amoy/Desktop/project/cwj/agent-config-sync/mcp/mcp-servers.shared.jsonc` + `mcp/secrets.env`。
 - **修改流程**：只改 shared 定义文件 → `scripts/sync-mcp.mjs all --write` 同步到 Kilo/Codex/cc-switch.db。

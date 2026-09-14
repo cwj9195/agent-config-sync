@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 单一源同步脚本 — shared-agent-config → Kilo / Codex / cc-switch / Claude / Copilot
+ * 单一源同步脚本 — agent-config-sync → Kilo / Codex / cc-switch / Claude / Copilot
  * 单一源: mcp/mcp-servers.shared.jsonc + mcp/secrets.env + skills/ + commands/ + prompts/
  *
  * 用法:
@@ -11,7 +11,7 @@
  *
  * Copilot 同步说明:
  *   - Skills: ~/.copilot/skills/ 符号链接
- *   - 指令: ~/.copilot/instructions/shared-agent-config.instructions.md
+ *   - 指令: ~/.copilot/instructions/agent-config-sync.instructions.md
  *   - MCP: 写入 VS Code 用户级 mcp.json；仅保留 features.shared.jsonc 中明确启用的共享服务
  */
 
@@ -435,7 +435,7 @@ ON CONFLICT(id) DO UPDATE SET
   console.log(`[ok] 已写入 ~/.cc-switch/cc-switch.db (mcp_servers 表)，备份: ${backupPath}`);
 }
 
-/** 将 shared-agent-config/skills/ 目录全量同步到 cc-switch skills 表。 */
+/** 将 agent-config-sync/skills/ 目录全量同步到 cc-switch skills 表。 */
 function syncSkillsToCcSwitch(writeMode, enabledSkills = {}) {
   const dbPath = expandHome('~/.cc-switch/cc-switch.db');
   if (!fs.existsSync(dbPath)) {
@@ -638,14 +638,14 @@ function syncToCopilot(writeMode) {
 
   // 指令文件
   const instructionsDir = path.join(copilotDir, 'instructions');
-  const instructionsFile = path.join(instructionsDir, 'shared-agent-config.instructions.md');
+  const instructionsFile = path.join(instructionsDir, 'agent-config-sync.instructions.md');
   const fallbackInstructions = `---
-name: 'Shared Agent Config'
+name: 'Agent Config Sync'
 description: '核心 Agent 协作规则（中文输出、结束报告、代码风格）'
 applyTo: '**/*'
 ---
 
-# Shared Agent Config — 核心规则
+# Agent Config Sync — 核心规则
 
 ## 中文输出
 
@@ -688,8 +688,8 @@ Copilot 通过 VS Code 设置 \`chat.mcp.discovery.enabled: true\` 自动发现 
     ? fs.readFileSync(AGENT_MD_SRC, 'utf8').trim()
     : fallbackInstructions.split('---\n').slice(2).join('---\n').trim();
   const INSTRUCTIONS_CONTENT = `---
-name: 'Shared Agent Config'
-description: '由 shared-agent-config/prompts/agent.md 同步的全局规则'
+name: 'Agent Config Sync'
+description: '由 agent-config-sync/prompts/agent.md 同步的全局规则'
 applyTo: '**/*'
 ---
 
@@ -842,7 +842,7 @@ function syncToDsh(mcpDefs, writeMode) {
   const patchPath = path.join(dshHome, 'cordis.patch.yml');
 
   const lines = [
-    '# 由 shared-agent-config/scripts/sync.mjs 生成的用户级 patch 层（作用于所有 profile），',
+    '# 由 agent-config-sync/scripts/sync.mjs 生成的用户级 patch 层（作用于所有 profile），',
     '# 在 profile 的 cordis.patch.yml 之后叠加。将启用的共享 MCP 供应商以',
     '# @deepseek-ai/dsh-mcp-client 桥接进 DSH，工具以 mcp__<serverName>__<tool> 暴露给模型。',
     '# 请勿手工编辑：改动请在 mcp-servers.shared.jsonc + secrets.env + features.shared.jsonc 完成。',

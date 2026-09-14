@@ -53,7 +53,7 @@
     - **禁止将 `read_session` 读取的目标会话 ID填入此字段。** `read_session` 的 id 参数是被读取的其他会话，不是当前对话。`list_sessions` 只能浏览历史，不能通过 cwd、时间、摘要、最近更新时间或关键词证明当前会话。
     - **禁止任何按工作区命中最近会话的降级逻辑。** `current_session` 返回 `source=unknown` 且 `id=null` 时，必须保留未知状态，不得改用 `list_sessions`、文件名、日志时间或用户问题关键词猜测。
     - 每轮结束报告的当前对话引用ID必须实际调用 `session-bridge.current_session` 或读取本客户端明确提供的精确身份；无法取得时写 `❌Unknown`。
-- 改动 skills、MCP 时，只改 shared-agent-config 源信息，Kilo 和 Codex 通过符号链接或同步脚本同步。
+- 改动 skills、MCP 时，只改 agent-config-sync 源信息，Kilo 和 Codex 通过符号链接或同步脚本同步。
 
 
 ## 基础包规则
@@ -90,4 +90,3 @@
 - 子 Agent 输出必须精炼，包含：结论、关键依据、文件和代码位置、发现的问题、风险和不确定性、建议修改、已执行验证、尚未验证内容。
 - 主 Agent 采用子 Agent 结论前必须检查依据、全局约束、结论冲突，并对关键结论交叉验证；不得将子 Agent 输出未经检查直接作为最终答案。
 - 若任务执行中影响范围扩大、需要扫描大量额外文件、出现多个可能根因或独立研究方向、上下文增长过快，应立即重新评估是否启用多 Agent。
-
