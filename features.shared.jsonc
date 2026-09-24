@@ -22,6 +22,7 @@
     "grilling": true,
     "loop": true,
     "memos": true,
+    "openapi-json-generator": true,
     "skill-vetter": true,
     "zentao-v1": true
   }
