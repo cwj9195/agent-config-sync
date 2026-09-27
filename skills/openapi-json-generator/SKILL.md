@@ -19,12 +19,13 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 3. `openapi` 固定为 `"3.0.3"`。
 4. 请求体、响应体**只写 schema，不写 example / examples**。
 5. **每个字段一行一个**：字段名 + 其完整 schema 对象必须在同一行。
-6. `components.responses` 统一定义：
+6. `components.responses` 统一定义（仅在用户明确要求错误响应时才在 paths 中引用，默认不引用）：
    - `BadRequest` → 400
    - `Unauthorized` → 401
    - `Forbidden` → 403
    - `NotFound` → 404
    - `ServerError` → 500
+6.1. **paths 中每个 operation 的 responses 默认只写 200 成功响应**，不引用错误响应。
 7. `components.schemas` 至少定义：
    - `ApiResponse`
    - `ErrorResponse`
@@ -40,15 +41,15 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 
 ## 生成流程
 1. 解析业务实体，列出请求/响应字段。
-2. 为每个字段标注 type/description/required 及 x-change。
+2. 为每个字段标注 type/description 及 x-change；只有前端契约明确要求必传时才添加 `"required": true`。
 3. 复用 `components.responses` 与 `components.schemas`。
-4. 组装 paths，确保每个 operation 的 responses 引用统一错误响应。
-5. 自检：顶层键、$ref 可达、无 example、字段一行一个。
+4. 组装 paths，每个 operation 的 responses 默认只写 200 成功响应；仅当用户明确要求某错误响应时才在对应 operation 引用 `components.responses`。
+5. 自检：顶层键、$ref 可达、无 example、字段一行一个、responses 默认仅 200。
 
 ## 字段书写细则（核心）
 - **每个字段占且仅占一行**，字段名与其 schema 对象写在同一行：
   `"id": { "type": "string", "description": "用户ID", "required": true },`
-- 字段内保留：`type`、`description`、`required`，以及变更时的 `x-change` / `x-change-note`。
+- 字段内保留：`type`、`description`，以及变更时的 `x-change` / `x-change-note`；只有前端明确要求必传时才添加 `required: true`。
 - 一行内多个键用 `, ` 分隔，行尾按 JSON 语法加 `,` 或省略。
 - **不拆分字段对象到多行**。
 - **不使用**对象级 `required` 数组。
@@ -58,7 +59,9 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
   - 安全方案：`"security": [{ "BearerAuth": [] }]`
 
 ## required 规则
-- 每个字段显式声明 `"required": true | false`，写在字段对象内部。
+- 仅当前端契约明确要求字段必传时，在字段对象内部写 `"required": true`。
+- 前端类型、校验或请求组装未明确要求必传时，省略 `required`；禁止写 `"required": false`。
+- 不得仅凭字段有值、后端 DTO 或 OpenAPI 通用惯例推断字段必传；无法确认时省略并记录待确认点。
 - 不使用对象级 `required` 数组。
 
 ## x-change 语义与省略规则
@@ -84,9 +87,10 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - [ ] openapi = 3.0.3
 - [ ] 顶层仅 6 个键
 - [ ] 无 example/examples
-- [ ] 错误响应 5 个齐全
+- [ ] 错误响应 5 个齐全（仅存于 components.responses，默认不在 paths 引用）
+- [ ] paths 中每个 operation 的 responses 默认只有 200
 - [ ] BearerAuth 存在且为 JWT
-- [ ] 每个字段内写 required
+- [ ] 仅前端明确必传的字段写 `required: true`；其他字段不写 `required`，无 `required: false`
 - [ ] 每个字段占一行（字段名与 schema 同行）
 - [ ] 无对象级 required 数组
 - [ ] 仅变更字段带 x-change / x-change-note
@@ -121,36 +125,36 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
         "type": "object",
         "description": "通用响应结构",
         "properties": {
-          "code": { "type": "integer", "description": "业务状态码", "required": true },
-          "message": { "type": "string", "description": "提示信息", "required": true },
-          "data": { "type": "object", "description": "业务数据", "required": false, "nullable": true }
+          "code": { "type": "integer", "description": "业务状态码" },
+          "message": { "type": "string", "description": "提示信息" },
+          "data": { "type": "object", "description": "业务数据", "nullable": true }
         }
       },
       "ErrorResponse": {
         "type": "object",
         "description": "错误响应结构",
         "properties": {
-          "code": { "type": "integer", "description": "错误码", "required": true },
-          "message": { "type": "string", "description": "错误信息", "required": true },
-          "traceId": { "type": "string", "description": "链路追踪ID", "required": false, "x-change": "added", "x-change-note": "新增链路追踪ID便于排查" }
+          "code": { "type": "integer", "description": "错误码" },
+          "message": { "type": "string", "description": "错误信息" },
+          "traceId": { "type": "string", "description": "链路追踪ID", "x-change": "added", "x-change-note": "新增链路追踪ID便于排查" }
         }
       },
       "PageMeta": {
         "type": "object",
         "description": "分页元信息",
         "properties": {
-          "page": { "type": "integer", "description": "当前页码", "required": true },
-          "pageSize": { "type": "integer", "description": "每页数量", "required": true },
-          "total": { "type": "integer", "description": "总条数", "required": true }
+          "page": { "type": "integer", "description": "当前页码" },
+          "pageSize": { "type": "integer", "description": "每页数量" },
+          "total": { "type": "integer", "description": "总条数" }
         }
       },
       "UserSummary": {
         "type": "object",
         "description": "用户摘要",
         "properties": {
-          "id": { "type": "string", "description": "用户ID", "required": true },
-          "name": { "type": "string", "description": "用户名", "required": true },
-          "email": { "type": "string", "description": "邮箱", "required": true, "x-change": "changed", "x-change-note": "由可选改为必填" }
+          "id": { "type": "string", "description": "用户ID" },
+          "name": { "type": "string", "description": "用户名" },
+          "email": { "type": "string", "description": "邮箱", "x-change": "changed", "x-change-note": "新增邮箱格式校验" }
         }
       }
     }
