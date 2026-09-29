@@ -37,11 +37,12 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 10. 字段级变更使用：
     - `x-change: added | removed | changed | rule-changed`
     - `x-change-note: "<一句话说明>"`
-11. 所有 `$ref` 必须能在 `components` 中找到。
+11. 字段在业务契约中存在明确枚举值时，必须在对应 schema 中使用 `enum` 列出所有允许值；枚举值的类型必须与字段 `type` 一致。
+12. 所有 `$ref` 必须能在 `components` 中找到。
 
 ## 生成流程
 1. 解析业务实体，列出请求/响应字段。
-2. 为每个字段标注 type/description 及 x-change；只有前端契约明确要求必传时才添加 `"required": true`。
+2. 为每个字段标注 type/description 及 x-change；契约明确枚举取值时添加 `enum`；只有前端契约明确要求必传时才添加 `"required": true`。
 3. 复用 `components.responses` 与 `components.schemas`。
 4. 组装 paths，每个 operation 的 responses 默认只写 200 成功响应；仅当用户明确要求某错误响应时才在对应 operation 引用 `components.responses`。
 5. 自检：顶层键、$ref 可达、无 example、字段一行一个、responses 默认仅 200。
@@ -50,6 +51,7 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - **每个字段占且仅占一行**，字段名与其 schema 对象写在同一行：
   `"id": { "type": "string", "description": "用户ID", "required": true },`
 - 字段内保留：`type`、`description`，以及变更时的 `x-change` / `x-change-note`；只有前端明确要求必传时才添加 `required: true`。
+- 字段存在明确枚举时，在该字段 schema 对象内增加 `enum`，完整列出契约允许值；字符串枚举写字符串值，整数枚举写整数值等，保证枚举项类型与字段 `type` 一致。描述中的示例值、未经确认的候选值不能据此推断为枚举。
 - 一行内多个键用 `, ` 分隔，行尾按 JSON 语法加 `,` 或省略。
 - **不拆分字段对象到多行**。
 - **不使用**对象级 `required` 数组。
@@ -82,6 +84,7 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - 禁止对象级 `required` 数组
 - 禁止把字段对象拆成多行
 - 禁止对无变更字段写 `x-change` / `x-change-note`
+- 禁止遗漏契约中明确存在的字段枚举或使用与字段类型不一致的枚举值
 
 ## 自检清单
 - [ ] openapi = 3.0.3
@@ -95,6 +98,7 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - [ ] 无对象级 required 数组
 - [ ] 仅变更字段带 x-change / x-change-note
 - [ ] 写了 x-change 的字段必有 x-change-note
+- [ ] 契约明确有枚举的字段均使用 enum 完整列出允许值，且值类型与字段 type 一致
 - [ ] 所有 $ref 可解析
 
 ## 基础骨架（可直接作为起点）
