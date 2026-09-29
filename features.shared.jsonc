@@ -15,7 +15,7 @@
   },
   "skills": {
     "browser-act": false,
-    "browser-skill": true,
+    "browser-skill": false,
     "find-skills": true,
     "frontend-design-agent": true,
     "grill-me": true,
