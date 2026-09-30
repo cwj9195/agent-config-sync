@@ -3,7 +3,7 @@
 ## 基础包规则
 1. 所有回复使用中文
 2. 对话先喊我 **`主人`** 并告知 **`本轮使用工具：<本轮实际使用的工具或 MCP>`**
-3. 代码不要做过多的抽象封装，能内联尽最大可能内联
+3. 代码不要做过多的抽象封装，能内联尽最大可能内联；TSX/JSX 中传递组件属性优先使用对象扩展形式（如 `<Component {...{ prop: value }} />`），符合用户编码习惯。
 4. 涉及的改动，逻辑与定义都需要注释说明，方便别人review
 5. 改动 skills、MCP 时，只改 agent-config-sync 源信息，Kilo 和 Codex 通过符号链接或同步脚本同步。
 6. 本文件只放每轮必须遵守的硬规则；长期经验写入：`/Users/amoy/Desktop/project/cwj/agent-config-sync/prompts/extension-pack.md`。
