@@ -13,6 +13,13 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - 需要统一的错误响应、通用 Schema、BearerAuth 安全方案
 - 需要字段级变更标记（x-change / x-change-note）
 
+## 输出模式
+- 默认使用 `refs` 引用模式，通用结构通过 `$ref` 复用，适合维护和减少重复。
+- 用户明确要求“不引用 `$ref`”“内聚”“内联”或“每个接口自包含”时，使用 `inline` 内联模式，不再追问。
+- 两种模式都保持 OpenAPI 3.0.3 的六个顶层键、字段级约束、变更标记和安全定义；模式只决定 Schema/Response 如何复用。
+- `inline` 模式将请求体、成功响应和错误响应 Schema 展开到使用位置；`components.schemas` 可为空对象，`components.responses` 保留统一错误响应名称但各自内联错误 Schema。不得留下任何 `$ref`。
+- 内联展开遇到递归业务结构时，按 PRD 明确的业务层级展开；若层级未定义，在末端说明层级限制，不保留递归 `$ref`。
+
 ## 输出硬性约束
 1. 只输出**纯 JSON**，不要 Markdown 代码块、不要注释、不要多余文字。
 2. 顶层必须且仅包含：`openapi`、`info`、`servers`、`tags`、`paths`、`components`。
@@ -26,26 +33,27 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
    - `NotFound` → 404
    - `ServerError` → 500
 6.1. **paths 中每个 operation 的 responses 默认只写 200 成功响应**，不引用错误响应。
-7. `components.schemas` 至少定义：
+7. `refs` 模式下 `components.schemas` 至少定义：
    - `ApiResponse`
    - `ErrorResponse`
    - `PageMeta`
    - `UserSummary`
    - 业务嵌套结构（按需）
+   `inline` 模式将 Schema 写在接口使用位置，`components.schemas` 可为空对象。
 8. `components.securitySchemes` 定义 `BearerAuth`：`type=http`、`scheme=bearer`、`bearerFormat=JWT`。
-9. 通用结构一律用 `$ref` 引用。
+9. `refs` 模式下通用结构用 `$ref` 引用；`inline` 模式下展开结构且禁止 `$ref`。
 10. 字段级变更使用：
     - `x-change: added | removed | changed | rule-changed`
     - `x-change-note: "<一句话说明>"`
 11. 字段在业务契约中存在明确枚举值时，必须在对应 schema 中使用 `enum` 列出所有允许值；枚举值的类型必须与字段 `type` 一致。
-12. 所有 `$ref` 必须能在 `components` 中找到。
+12. `refs` 模式下所有 `$ref` 必须能在 `components` 中找到；`inline` 模式下全文件不得出现 `$ref`。
 
 ## 生成流程
 1. 解析业务实体，列出请求/响应字段。
 2. 为每个字段标注 type/description 及 x-change；契约明确枚举取值时添加 `enum`；只有前端契约明确要求必传时才添加 `"required": true`。
-3. 复用 `components.responses` 与 `components.schemas`。
-4. 组装 paths，每个 operation 的 responses 默认只写 200 成功响应；仅当用户明确要求某错误响应时才在对应 operation 引用 `components.responses`。
-5. 自检：顶层键、$ref 可达、无 example、字段一行一个、responses 默认仅 200。
+3. 按输出模式复用 `components.responses` 与 `components.schemas`，或将结构完整展开到接口使用位置。
+4. 组装 paths，每个 operation 的 responses 默认只写 200 成功响应；仅当用户明确要求错误响应时才添加到对应 operation，`refs` 模式引用 `components.responses`，`inline` 模式直接内联响应 Schema。
+5. 自检：顶层键、模式对应的 `$ref` 规则、无 example、字段一行一个、responses 默认仅 200。
 
 ## 字段书写细则（核心）
 - **每个字段占且仅占一行**，字段名与其 schema 对象写在同一行：
@@ -55,7 +63,7 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - 一行内多个键用 `, ` 分隔，行尾按 JSON 语法加 `,` 或省略。
 - **不拆分字段对象到多行**。
 - **不使用**对象级 `required` 数组。
-- `$ref` 用法：
+- `refs` 模式的 `$ref` 用法：
   - 错误响应：`"$ref": "#/components/responses/BadRequest"`
   - 通用 Schema：`"$ref": "#/components/schemas/ApiResponse"`
   - 安全方案：`"security": [{ "BearerAuth": [] }]`
@@ -80,7 +88,8 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - 禁止 example / examples
 - 禁止 YAML
 - 禁止顶层出现第 7 个键
-- 禁止无 `$ref` 可达性保障
+- `refs` 模式禁止无 `$ref` 可达性保障
+- `inline` 模式禁止出现任何 `$ref`（包括组件响应和递归结构）
 - 禁止对象级 `required` 数组
 - 禁止把字段对象拆成多行
 - 禁止对无变更字段写 `x-change` / `x-change-note`
@@ -99,7 +108,7 @@ description: 根据业务需求生成纯 JSON 的 OpenAPI 3.0.3 文档，统一�
 - [ ] 仅变更字段带 x-change / x-change-note
 - [ ] 写了 x-change 的字段必有 x-change-note
 - [ ] 契约明确有枚举的字段均使用 enum 完整列出允许值，且值类型与字段 type 一致
-- [ ] 所有 $ref 可解析
+- [ ] `refs` 模式下所有 `$ref` 可解析；`inline` 模式下全文无 `$ref`
 
 ## 基础骨架（可直接作为起点）
 ```json
