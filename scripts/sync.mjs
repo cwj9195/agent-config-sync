@@ -244,22 +244,25 @@ function syncToCodex(mcpDefs, writeMode) {
   const sourceDefs = writeMode ? mcpDefs : redactMcpDefsForPreview(mcpDefs);
   for (const [name, def] of Object.entries(sourceDefs)) {
     tomlLines.push(`[mcp_servers.${name}]`);
-    if (def.type === 'local') {
+    if (def.type === 'local' || def.type === 'stdio') {
+      // 统一支持共享定义中的 local 命令数组和 stdio 命令字段，避免生成空的 Codex MCP 配置。
+      const command = def.type === 'local' ? def.command[0] : def.command;
+      const args = def.type === 'local' ? def.command.slice(1) : (def.args || []);
+      const environment = def.type === 'local' ? def.environment : def.env;
       tomlLines.push('type = "stdio"');
-      tomlLines.push(`command = "${def.command[0]}"`);
-      const args = def.command.slice(1).map(a => `"${a}"`);
+      tomlLines.push(`command = ${JSON.stringify(command)}`);
       if (args.length === 1) {
-        tomlLines.push(`args = [${args[0]}]`);
+        tomlLines.push(`args = [${JSON.stringify(args[0])}]`);
       } else {
         tomlLines.push('args = [');
-        tomlLines.push(args.map(a => `    ${a}`).join(',\n'));
+        tomlLines.push(args.map(a => `    ${JSON.stringify(a)}`).join(',\n'));
         tomlLines.push('  ]');
       }
-      if (def.environment && Object.keys(def.environment).length > 0) {
+      if (environment && Object.keys(environment).length > 0) {
         tomlLines.push('');
         tomlLines.push(`[mcp_servers.${name}.env]`);
-        for (const [k, v] of Object.entries(def.environment)) {
-          tomlLines.push(`${k} = "${v}"`);
+        for (const [k, v] of Object.entries(environment)) {
+          tomlLines.push(`${k} = ${JSON.stringify(v)}`);
         }
       }
     } else if (def.type === 'remote') {

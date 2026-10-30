@@ -1,13 +1,53 @@
 {
   // MCP 服务器共享定义。密钥使用 __PLACEHOLDER__ 占位。
   // 实际密钥在 mcp/secrets.env 中（已 .gitignore）。
-  "codegraph": {
+  "zentao-rest-v1": {
+    "type": "local",
+    "command": ["npx", "-y", "zentao-rest-v1-mcp@1.0.1"],
+    "environment": {
+      "ZENTAO_URL": "__ZENTAO_BASE_URL__",
+      "ZENTAO_USERNAME": "__ZENTAO_ACCOUNT__",
+      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
+      "ZENTAO_TIMEOUT_MS": "30000",
+      "ZENTAO_SESSION_TTL_MS": "3000000"
+    },
+    "enabled": true
+  },
+  "yapi-auto-mcp": {
     "type": "local",
     "command": [
-      "codegraph",
-      "serve",
-      "--mcp"
+      "npx",
+      "-y",
+      "--registry=https://registry.npmjs.org",
+      "yapi-auto-mcp",
+      "--stdio",
+      "--yapi-base-url=__YAPI_BASE_URL__",
+      "--yapi-token=__YAPI_TOKEN__"
     ],
+    "enabled": true
+  },
+  "yuque-fe": {
+    // 语雀 前端 FE 服务器配置。
+    "type": "stdio",
+    "command": "cmd",
+    "args": ["/c", "npx", "-y", "yuque-mcp"],
+    "env": {
+      "YUQUE_FE_TOKEN": "YUQUE_FE_TOKEN"
+    }
+  },
+  "yuque-pm": {
+    // 语雀 产品PM 服务器配置。
+    "type": "stdio",
+    "command": "cmd",
+    "args": ["/c", "npx", "-y", "yuque-mcp"],
+    "env": {
+      "YUQUE_PM_TOKEN": "YUQUE_PM_TOKEN"
+    }
+  },
+
+  "codegraph": {
+    "type": "local",
+    "command": ["codegraph", "serve", "--mcp"],
     "enabled": true
   },
   "mastergo-magic-mcp": {
@@ -36,61 +76,16 @@
   },
   "session-bridge": {
     "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "session-bridge-mcp@0.2.0"
-    ],
-    "enabled": true
-  },
-  "yapi-auto-mcp": {
-    "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "--registry=https://registry.npmjs.org",
-      "yapi-auto-mcp",
-      "--stdio",
-      "--yapi-base-url=__YAPI_BASE_URL__",
-      "--yapi-token=__YAPI_TOKEN__"
-    ],
+    "command": ["npx", "-y", "session-bridge-mcp@0.2.0"],
     "enabled": true
   },
   "memos-api-mcp": {
     "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "@memtensor/memos-api-mcp@latest"
-    ],
+    "command": ["npx", "-y", "@memtensor/memos-api-mcp@latest"],
     "environment": {
       "MEMOS_API_KEY": "__MEMOS_API_KEY__",
       "MEMOS_USER_ID": "__MEMOS_USER_ID__",
       "MEMOS_CHANNEL": "__MEMOS_CHANNEL__"
-    },
-    "enabled": true
-  },
-  "zentao-rest-v1": {
-    "type": "local",
-    "command": [
-      "npx",
-      "-y",
-      "zentao-rest-v1-mcp@1.0.1"
-    ],
-    "environment": {
-      "ZENTAO_URL": "__ZENTAO_BASE_URL__",
-      "ZENTAO_USERNAME": "__ZENTAO_ACCOUNT__",
-      "ZENTAO_PASSWORD": "__ZENTAO_PASSWORD__",
-      "ZENTAO_TIMEOUT_MS": "30000",
-      "ZENTAO_SESSION_TTL_MS": "3000000"
-    },
-    "enabled": true
-  },
-  "yuque": {
-    "type": "remote",
-    "url": "https://yuque.example.com/api/v2",
-    "headers": {
-      "X-Auth-Token": "__YUQUE_TOKEN__"
     },
     "enabled": true
   }

@@ -11,7 +11,9 @@
     "zentao": false,
     "zentao-rest-v1": true,
     "zentao-aipper": false,
-    "yuque": false
+    "yuque": false,
+    "yuque-fe":true,
+    "yuque-pm":true
   },
   "skills": {
     "browser-act": false,
@@ -24,6 +26,7 @@
     "memos": true,
     "openapi-json-generator": true,
     "skill-vetter": true,
+    "company-workflow": true,
     "zentao-v1": true
   }
 }
