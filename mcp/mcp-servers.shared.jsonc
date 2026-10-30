@@ -26,6 +26,18 @@
     ],
     "enabled": true
   },
+  "yapi-mcp-pro": {
+    // 独立保留扩展版 YApi 工具集；凭据复用 secrets.env 中的 YAPI_BASE_URL / YAPI_TOKEN。
+    // 固定到已验证的 npm 版本，避免 npx 自动漂移到未经本地检查的版本。
+    "type": "local",
+    "command": ["npx", "-y", "--registry=https://registry.npmjs.org", "yapi-mcp-pro@0.2.1"],
+    "environment": {
+      "YAPI_BASE_URL": "__YAPI_BASE_URL__",
+      "YAPI_TOKEN": "__YAPI_TOKEN__",
+      "NODE_ENV": "cli"
+    },
+    "enabled": true
+  },
   "yuque-fe": {
     // 语雀 前端 FE 服务器配置。
     "type": "stdio",
