@@ -109,6 +109,9 @@ function replacePlaceholders(mcpDefs, secrets) {
     ['__MASTERGO_TOKEN__', secrets.MASTERGO_TOKEN || ''],
     ['__YAPI_BASE_URL__', secrets.YAPI_BASE_URL || ''],
     ['__YAPI_TOKEN__', secrets.YAPI_TOKEN || ''],
+    // 将语雀不同用途的凭据分别注入对应 MCP，避免把环境变量名当作 token 值写入。
+    ['__YUQUE_FE_TOKEN__', secrets.YUQUE_FE_TOKEN || ''],
+    ['__YUQUE_PM_TOKEN__', secrets.YUQUE_PM_TOKEN || ''],
     ['__YUQUE_TOKEN__', secrets.YUQUE_TOKEN || ''],
     ['__YUQUE_BASE_URL__', secrets.YUQUE_BASE_URL || 'https://www.yuque.com/api/v2'],
     ['__ZHIPU_API_KEY__', secrets.ZHIPU_API_KEY || ''],

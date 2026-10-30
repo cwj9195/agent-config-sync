@@ -39,21 +39,21 @@
     "enabled": true
   },
   "yuque-fe": {
-    // 语雀 前端 FE 服务器配置。
+    // 语雀前端服务器直接启动 npx，避免 macOS 环境调用 Windows 专用的 cmd /c。
     "type": "stdio",
-    "command": "cmd",
-    "args": ["/c", "npx", "-y", "yuque-mcp"],
+    "command": "npx",
+    "args": ["-y", "yuque-mcp"],
     "env": {
-      "YUQUE_FE_TOKEN": "YUQUE_FE_TOKEN"
+      "YUQUE_FE_TOKEN": "__YUQUE_FE_TOKEN__"
     }
   },
   "yuque-pm": {
-    // 语雀 产品PM 服务器配置。
+    // 语雀产品 PM 服务器直接启动 npx，避免 macOS 环境调用 Windows 专用的 cmd /c。
     "type": "stdio",
-    "command": "cmd",
-    "args": ["/c", "npx", "-y", "yuque-mcp"],
+    "command": "npx",
+    "args": ["-y", "yuque-mcp"],
     "env": {
-      "YUQUE_PM_TOKEN": "YUQUE_PM_TOKEN"
+      "YUQUE_PM_TOKEN": "__YUQUE_PM_TOKEN__"
     }
   },
 
