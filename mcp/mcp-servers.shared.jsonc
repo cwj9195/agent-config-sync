@@ -44,7 +44,7 @@
     "command": "npx",
     "args": ["-y", "yuque-mcp"],
     "env": {
-      "YUQUE_FE_TOKEN": "__YUQUE_FE_TOKEN__"
+      "YUQUE_PERSONAL_TOKEN": "__YUQUE_FE_TOKEN__"
     }
   },
   "yuque-pm": {
@@ -53,7 +53,7 @@
     "command": "npx",
     "args": ["-y", "yuque-mcp"],
     "env": {
-      "YUQUE_PM_TOKEN": "__YUQUE_PM_TOKEN__"
+      "YUQUE_PERSONAL_TOKEN": "__YUQUE_PM_TOKEN__"
     }
   },
 
